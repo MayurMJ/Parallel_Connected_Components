@@ -9,7 +9,10 @@
 #include <map>
 #include <algorithm>
 #include <cilk/cilk.h>
+#include <sys/time.h>
 using namespace std;
+struct timeval start,end;
+
 
 #define HEAD true
 #define TAIL false
@@ -23,7 +26,8 @@ void Par_Prefix_Sum(vector<int> &arr, vector<int> &out);
 int par_random_cc(int n, vector<Edge> &E, vector<int> &L, vector<int> &M);
 
 int main(int argc, const char * argv[]) {
-	ifstream graph_input("input.txt");
+
+	ifstream graph_input(argv[1]);
 	if (graph_input.is_open())
 	{
 		string line;
@@ -36,12 +40,12 @@ int main(int argc, const char * argv[]) {
 			in[i] = value;
 			i++;
 		}
-		vector<int> V(in[0] + 1);
-		vector<Edge> E(in[1] + 1);
-		vector<int> L(in[0] + 1);
 		int n, m;
 		n = in[0] + 1;
-		m = in[1] + 1;
+		m = (2*in[1]) + 1;
+		vector<int> V(n);
+		vector<Edge> E(m);
+		vector<int> L(n);
 		vector<int> M(n);
 		i = 1;
 		int j = 0;
@@ -58,7 +62,9 @@ int main(int argc, const char * argv[]) {
 			}
 			E[i].u = in[0];
 			E[i].v = in[1];
-			i++;
+			E[i+1].u = in[1];
+			E[i+1].v = in[0];
+			i= i+2;
 		}
 
 		cilk_for (int i = 1; i < n; i++)
@@ -69,8 +75,11 @@ int main(int argc, const char * argv[]) {
 		{
 			M[i] = i;	
 		}
-		par_random_cc(n, E, L, M);
-
+		gettimeofday(&start,NULL); 
+                par_random_cc(n, E, L, M);
+                gettimeofday(&end,NULL); //Stop timing the computation
+                double myTime = (end.tv_sec+(double)end.tv_usec/1000000) - (start.tv_sec+(double)start.tv_usec/1000000);
+                cout << argv[1] << ": Implemented in: " << myTime << " seconds.\n";
 
 		map<int, int> CC;
 		vector<int> result;
