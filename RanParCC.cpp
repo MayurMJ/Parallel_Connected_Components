@@ -18,37 +18,37 @@ struct timeval start,end;
 #define TAIL false
 
 struct Edge {
-	int u, v;
+	long u, v;
 };
 
-bool compare_func(int i, int j);
-void Par_Prefix_Sum(vector<int> &arr, vector<int> &out);
-int par_random_cc(int n, vector<Edge> &E, vector<int> &L, vector<int> &M);
+bool compare_func(long i, long j);
+void Par_Prefix_Sum(vector<long> &arr, vector<long> &out);
+int par_random_cc(long n, vector<Edge> &E, vector<long> &L, vector<long> &M);
 
-int main(int argc, const char * argv[]) {
+int main(long argc, const char * argv[]) {
 
 	ifstream graph_input(argv[1]);
 	if (graph_input.is_open())
 	{
 		string line;
-		int in[2], value;
+		long in[2], value;
 		getline(graph_input, line);
 		std::istringstream ss(line);
-		int i = 0;
+		long i = 0;
 		while (ss >> value)
 		{
 			in[i] = value;
 			i++;
 		}
-		int n, m;
+		long n, m;
 		n = in[0] + 1;
 		m = (2*in[1]) + 1;
-		vector<int> V(n);
+		vector<long> V(n);
 		vector<Edge> E(m);
-		vector<int> L(n);
-		vector<int> M(n);
+		vector<long> L(n);
+		vector<long> M(n);
 		i = 1;
-		int j = 0;
+		long j = 0;
 		while (getline(graph_input, line))
 		{
 			std::istringstream ss(line);
@@ -67,11 +67,11 @@ int main(int argc, const char * argv[]) {
 			i= i+2;
 		}
 
-		cilk_for (int i = 1; i < n; i++)
+		cilk_for (long i = 1; i < n; i++)
 		{
 			L[i] = i;
 		}
-		cilk_for (int i = 1; i < n; i++)
+		cilk_for (long i = 1; i < n; i++)
 		{
 			M[i] = i;	
 		}
@@ -81,48 +81,48 @@ int main(int argc, const char * argv[]) {
                 double myTime = (end.tv_sec+(double)end.tv_usec/1000000) - (start.tv_sec+(double)start.tv_usec/1000000);
                 cout << argv[1] << ": Implemented in: " << myTime << " seconds.\n";
 
-		map<int, int> CC;
-		vector<int> result;
-		for (int k = 1; k<M.size(); k++)
+		map<long, long> CC;
+		vector<long> result;
+		for (long k = 1; k<M.size(); k++)
 			CC[M[k]]++;
 
-		for (map<int, int>::iterator m_iter = CC.begin(); m_iter != CC.end(); ++m_iter) {
+		for (map<long, long>::iterator m_iter = CC.begin(); m_iter != CC.end(); ++m_iter) {
 			result.push_back(m_iter->second);
 		}
 
 		sort(result.begin(), result.end(), compare_func);
 		cout << result.size() << endl;
 
-		for (int i = 0; i<result.size(); i++)
+		for (long i = 0; i<result.size(); i++)
 			cout << result[i] << endl;
 	}
 }
-bool compare_func(int i, int j) {
+bool compare_func(long i, long j) {
 	return i>j;
 }
 
-void printarr(vector <int> &arr)
+void printarr(vector <long> &arr)
 {
 	printf("\n");
-	for (int i = 0; i< arr.size(); i++)
+	for (long i = 0; i< arr.size(); i++)
 		printf("%d\t", arr[i]);
 }
-int par_random_cc(int n, vector<Edge> &E, vector<int> &L, vector<int> &M)
+int par_random_cc(long n, vector<Edge> &E, vector<long> &L, vector<long> &M)
 {
-	int m = E.size();
-	vector<int> C(n);
-	vector<int> S(m);
-	vector<int> T(m);
+	long m = E.size();
+	vector<long> C(n);
+	vector<long> S(m);
+	vector<long> T(m);
 	if (m == 1)
 	{
 		return 0;
 	}
-	cilk_for (int i = 1; i<n; i++) {
+	cilk_for (long i = 1; i<n; i++) {
 		double r = (double)rand() / RAND_MAX;
 		C[i] = (r >= 0.5) ? HEAD : TAIL;
 	}
 
-	cilk_for (int i = 1; i < m; i++)
+	cilk_for (long i = 1; i < m; i++)
 	{
 		if (C[E[i].u] == TAIL && C[E[i].v] == HEAD)
 		{
@@ -130,7 +130,7 @@ int par_random_cc(int n, vector<Edge> &E, vector<int> &L, vector<int> &M)
 		}
 	}
 
-	cilk_for (int i = 1; i < m; i++)
+	cilk_for (long i = 1; i < m; i++)
 	{
 		if (L[E[i].u] != L[E[i].v])
 		{
@@ -143,7 +143,7 @@ int par_random_cc(int n, vector<Edge> &E, vector<int> &L, vector<int> &M)
 	}
 	Par_Prefix_Sum(S, T);
 	vector<Edge> F(T[m - 1] + 1);
-	cilk_for (int i = 1; i < m; i++)
+	cilk_for (long i = 1; i < m; i++)
 	{
 		if (L[E[i].u] != L[E[i].v])
 		{
@@ -152,14 +152,14 @@ int par_random_cc(int n, vector<Edge> &E, vector<int> &L, vector<int> &M)
 		}
 	}
 	par_random_cc(n, F, L, M);
-	cilk_for (int i = 1; i < m; i++)
+	cilk_for (long i = 1; i < m; i++)
 	{
 		if (E[i].v == L[E[i].u])
 			M[E[i].u] = M[E[i].v];
 	}
 }
 
-void Par_Prefix_Sum(vector<int> &arr, vector<int> &out)
+void Par_Prefix_Sum(vector<long> &arr, vector<long> &out)
 {
 	int len = arr.size();
 
@@ -168,23 +168,23 @@ void Par_Prefix_Sum(vector<int> &arr, vector<int> &out)
 		return;
 	}
 
-	vector<int> y(len / 2);
-	vector<int> z(len / 2);
+	vector<long> ll(len / 2);
+	vector<long> lr(len / 2);
 
-	cilk_for (int i = 0; i<len / 2; i++)
+	cilk_for (long i = 0; i<len / 2; i++)
 	{
-		y[i] = arr[2 * i] + arr[2 * i + 1];
+		ll[i] = arr[2 * i] + arr[2 * i + 1];
 	}
 
-	Par_Prefix_Sum(y, z);
-	cilk_for (int i = 0; i<len; i++)
+	Par_Prefix_Sum(ll, lr);
+	cilk_for (long i = 0; i<len; i++)
 	{
 		if (i == 0)
 			out[i] = arr[i];
 		else if (i % 2 != 0)
-			out[i] = z[i / 2];
+			out[i] = lr[i / 2];
 		else
-			out[i] = z[(i - 1) / 2] + arr[i];
+			out[i] = lr[(i - 1) / 2] + arr[i];
 	}
 }
 
