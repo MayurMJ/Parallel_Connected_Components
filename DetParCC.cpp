@@ -71,7 +71,7 @@ int main(int argc, const char * argv[]) {
     		cout << argv[1] << ": Implemented in: " << myTime << " seconds.\n";
 	
 		
-		map<long, long> CC;
+		/*map<long, long> CC;
 		vector<long> result;
 		for(long k=1;k<L.size();k++)
 		CC[L[k]]++;
@@ -84,7 +84,7 @@ int main(int argc, const char * argv[]) {
 		cout<<result.size()<<endl;
 
 		for(long i=0;i<result.size();i++)
-		cout<<result[i]<<endl;
+		cout<<result[i]<<endl;*/
 	}
 }
 bool compare_func(long i, long j) {

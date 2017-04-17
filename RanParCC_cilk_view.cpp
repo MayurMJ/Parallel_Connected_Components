@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <cilk/cilk.h>
 #include <sys/time.h>
+#include "cilkview.h"
 using namespace std;
 struct timeval start,end;
 
@@ -75,26 +76,10 @@ int main(long argc, const char * argv[]) {
 		{
 			M[i] = i;	
 		}
-		gettimeofday(&start,NULL); 
-                par_random_cc(n, E, L, M);
-                gettimeofday(&end,NULL); //Stop timing the computation
-                double myTime = (end.tv_sec+(double)end.tv_usec/1000000) - (start.tv_sec+(double)start.tv_usec/1000000);
-                cout << argv[1] << ": Implemented in: " << myTime << " seconds.\n";
-
-		/*map<long, long> CC;
-		vector<long> result;
-		for (long k = 1; k<M.size(); k++)
-			CC[M[k]]++;
-
-		for (map<long, long>::iterator m_iter = CC.begin(); m_iter != CC.end(); ++m_iter) {
-			result.push_back(m_iter->second);
-		}
-
-		sort(result.begin(), result.end(), compare_func);
-		cout << result.size() << endl;
-
-		for (long i = 0; i<result.size(); i++)
-			cout << result[i] << endl;*/
+		cilkview_data_t start;
+                __cilkview_query(start);
+		 par_random_cc(n, E, L, M);
+		__cilkview_report(&start, NULL, "my_tag", CV_REPORT_WRITE_TO_RESULTS);
 	}
 }
 bool compare_func(long i, long j) {
