@@ -21,8 +21,8 @@ int main(int argc , char * argv []) {
 		A = (int *) malloc(sizeof(int) * COUNT);
 		srand(time(NULL));	
 		for (i = COUNT - 1; i >= 0; i--) {
-			//A[i] = rand() %100;	
-			A[i] = i;
+			A[i] = rand() %100;	
+		//	A[i] = i;
 		}
 		for (i = 0; i < COUNT; i++) {	
 			printf("%d ", A[i]);
@@ -34,6 +34,12 @@ int main(int argc , char * argv []) {
 		}
 		free(A);
 	}
+	else
+	{	
+		R_BS(A,0,COUNT -1, COUNT);
+	}
+
+MPI_Finalize();
 }
 
 
@@ -80,11 +86,11 @@ int temp, lm,rm,i,j ;
 
 void R_BS(int *A,int l ,int h,int n)
 {
-        int temp, m, i,j, recvcount;
+        int temp, m, i,j, recvcount, sendcount;
 	int *B;
 	if(my_id == 0) 
 	{
-        	if((h-l + 1) <= 50)
+		if((h-l + 1) <= 50)
         	{
                 	for(i = l; i <=h; i++)
                 	{
@@ -102,23 +108,27 @@ void R_BS(int *A,int l ,int h,int n)
         	else
         	{
                 	m = (l+h) / 2;
-                	B = malloc(sizeof(int) * (m+1));
+			sendcount = m+1;
+                        B = malloc(sizeof(int) * (m+1));
+			MPI_Send(&sendcount,1,MPI_INT,1,0,MPI_COMM_WORLD);
    			MPI_Send(A, m+1, MPI_INT, 1, 0, MPI_COMM_WORLD);
                 	R_BS(A, m+1, h, n);
 			MPI_Recv(B, m+1, MPI_INT, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 			for(i = 0; i <= m; i++)	
 			{
-				A[i + l] = B[i];
+				A[i] = B[i];
 			}
 			free(B);
         	}
 	}
 	else if(my_id == 1)
 	{
+		MPI_Recv(&recvcount,1,MPI_INT,0,0,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+		printf("recvcount %d\n", recvcount);
 		B = malloc(sizeof(int) * recvcount);
-		MPI_Recv(B, recvcount, MPI_INT, 0, 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+		MPI_Recv(B,recvcount, MPI_INT, 0, 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
 		l = 0;
-		h = recvcount -1; 
+		h = 50 -1; 
 		if((h-l + 1) <= 50)
                 {
                         for(i = l; i <=h; i++)
@@ -135,5 +145,6 @@ void R_BS(int *A,int l ,int h,int n)
                         }
                 }
 		MPI_Send(B, recvcount, MPI_INT, 0, 0, MPI_COMM_WORLD);
+		free (B);
 	}
 }	
