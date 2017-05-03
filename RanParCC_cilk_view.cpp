@@ -89,8 +89,8 @@ bool compare_func(long i, long j) {
 void printarr(vector <long> &arr)
 {
 	printf("\n");
-	for (long i = 0; i< arr.size(); i++)
-		printf("%d\t", arr[i]);
+	for (long i = 0; i< arr.size(); i++);
+	//	printf("%d\t", arr[i]);
 }
 int par_random_cc(long n, vector<Edge> &E, vector<long> &L, vector<long> &M)
 {
@@ -142,6 +142,7 @@ int par_random_cc(long n, vector<Edge> &E, vector<long> &L, vector<long> &M)
 		if (E[i].v == L[E[i].u])
 			M[E[i].u] = M[E[i].v];
 	}
+return 0;
 }
 
 void Par_Prefix_Sum(vector<long> &arr, vector<long> &out)
