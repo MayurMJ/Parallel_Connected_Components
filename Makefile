@@ -1,4 +1,4 @@
-CC=icpc
+CC=mpicc
 CFLAGS=-O0
 
 all:

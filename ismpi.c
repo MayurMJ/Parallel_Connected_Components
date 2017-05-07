@@ -6,8 +6,8 @@
 # include <mpi.h>
 #include <sys/time.h>
 int COUNT;
-void R_SS(int *A,int l ,int h,int n);
-void P_SS(int *A, int ll,int lh,int rl,int rh,int n);
+void R_BS(int *A,int l ,int h,int n);
+void P_BS(int *A, int ll,int lh,int rl,int rh,int n);
 int my_id;
 struct timeval start,end;
 int numprocs;
@@ -25,7 +25,7 @@ int main(int argc , char * argv []) {
 		A = (int *) malloc(sizeof(int) * COUNT);
 		srand(time(NULL));	
 		for (i = COUNT - 1; i >= 0; i--) {
-			//A[i] = rand() %10;	
+		//	A[i] = rand() %100;	
 			A[i] = COUNT -i;
 		}
 		for (i = 0; i < COUNT; i++) {	
@@ -33,10 +33,10 @@ int main(int argc , char * argv []) {
 		}
 		printf("\n");
                 gettimeofday(&start,NULL);
-		R_SS(A,0,COUNT -1, COUNT);
+		R_BS(A,0,COUNT -1, COUNT);
                 gettimeofday(&end,NULL); //Stop timing the computation
                 double myTime = (end.tv_sec+(double)end.tv_usec/1000000) - (start.tv_sec+(double)start.tv_usec/1000000);
-                 printf("Bubble Sort Implemented in: %f seconds",myTime);
+                 printf("Insertion Sort Implemented in: %f seconds",myTime);
 
 		for (i = 0; i < COUNT; i++) {	
 			printf("%d ", A[i]);
@@ -45,16 +45,16 @@ int main(int argc , char * argv []) {
 	}
 	else
 	{	
-		R_SS(A,0,COUNT -1, COUNT);
+		R_BS(A,0,COUNT -1, COUNT);
 	}
 
 MPI_Finalize();
 }
 
 
-void P_SS(int *A, int ll,int lh,int rl,int rh,int n)
+void P_BS(int *A, int ll,int lh,int rl,int rh,int n)
 {
-int temp, lm,rm,i,j,source,dest,min;
+int temp, lm,rm,i,j,source,dest,key;
 int sendparams[5];
 int recvparams[5];
 int *B, *C;
@@ -91,10 +91,10 @@ if(my_id == 0)
                 sendparams[3] = rm;
                 sendparams[4] = n;
 	
-                //P_SS(A,ll,lm,rl,rm,n);
+                //P_BS(A,ll,lm,rl,rm,n);
                 MPI_Send(&sendparams,5,MPI_INT,2,0,MPI_COMM_WORLD);
 		MPI_Send(A,n,MPI_INT,2,0,MPI_COMM_WORLD);
-                //P_SS(A,lm+1,lh,rm+1,rh,n);
+                //P_BS(A,lm+1,lh,rm+1,rh,n);
                 sendparams[0] = lm+1;
 		sendparams[1] = lh;
 		sendparams[2] = rm+1;
@@ -135,14 +135,14 @@ if(my_id == 0)
                         A[i] = B[i];
                 }
                 free (B);	
-		sendparams[0] = ll; 
-		sendparams[1] = lm;
-		sendparams[2] = rm+1;
-		sendparams[3] = rh;
-		sendparams[4] = n;
-		MPI_Send(&sendparams,5,MPI_INT,2,0,MPI_COMM_WORLD);
-		MPI_Send(A,n,MPI_INT,2,0,MPI_COMM_WORLD);
-		//P_SS(A,lm+1,lh,rl,rm,n);
+		//sendparams[0] = ll; 
+		//sendparams[1] = lm;
+		//sendparams[2] = rm+1;
+		//sendparams[3] = rh;
+		//sendparams[4] = n;
+		//MPI_Send(&sendparams,5,MPI_INT,2,0,MPI_COMM_WORLD);
+		//MPI_Send(A,n,MPI_INT,2,0,MPI_COMM_WORLD);
+		//P_BS(A,lm+1,lh,rl,rm,n);
 		sendparams[0] = lm+1; 
 		sendparams[1] = lh;
 		sendparams[2] = rl;
@@ -151,18 +151,18 @@ if(my_id == 0)
 		MPI_Send(&sendparams,5,MPI_INT,3,0,MPI_COMM_WORLD);
 		MPI_Send(A,n,MPI_INT,3,0,MPI_COMM_WORLD);
 		// Recieve
-                //P_SS(A,ll,lm,rm+1,rh,n);
-                B = malloc(sizeof(int) * n);
-		MPI_Recv(B,n,MPI_INT,2,0,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
-		for(i = ll; i<=lm; i++)
-		{
-			A[i]  = B[i];
-		}
-		for(i = rm+1; i<= rh; i++ )
-		{
-			A[i] = B[i];
-		}
-		free(B);
+                //P_BS(A,ll,lm,rm+1,rh,n);
+                //B = malloc(sizeof(int) * n);
+		//MPI_Recv(B,n,MPI_INT,2,0,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+		//for(i = ll; i<=lm; i++)
+		//{
+		//	A[i]  = B[i];
+		//}
+		//for(i = rm+1; i<= rh; i++ )
+		//{
+		//	A[i] = B[i];
+		//}
+		//free(B);
                 B = malloc(sizeof(int) * n);
 		MPI_Recv(B,n,MPI_INT,3,0,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
 		for(i = lm+1; i<=lh; i++)
@@ -207,7 +207,7 @@ else if(my_id > 1)
                         sendparams[2] = rl;
                         sendparams[3] = rm;
                         sendparams[4] = n;
-			if(my_id < numprocs /2)
+			if(my_id < numprocs / 2)
 			{
                         	MPI_Send(&sendparams,5,MPI_INT,(2*my_id),0,MPI_COMM_WORLD);
                        	 	MPI_Send(&sendparams,5,MPI_INT,(2*my_id + 1),0,MPI_COMM_WORLD); 
@@ -217,24 +217,31 @@ else if(my_id > 1)
 		B = malloc(sizeof(int) * n);
 		MPI_Recv(B,recvparams[4],MPI_INT,source,0,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
 		if(my_id >= numprocs/2 || (lh - ll + 1) <= b)
-        	{  
-			for(i = ll; i <= lh; i++)
+        	{
+			if (B[lh] > B[rl])
                 	{
-                        	min = i;
-                        	for(j = rl; j <=rh; j++)
+                        	for (i = rl; i <= rh; i++)
                         	{
-                                	if(B[j] < B[min])
+                                	key = B[i];
+                                	j = i - 1;
+                                	while (j >= rl && B[j] > key)
                                 	{
-                                        	min = j;
+                                        	B[j + 1] = B[j];
+                                        	j = j - 1;
                                 	}
+                                	if (B[lh] > key)
+                                	{
+                                        	B[rl] = B[lh];
+                                       		j = lh - 1;
+                                        	while (j >= ll && B[j] > key)
+                                        	{
+                                                	B[j + 1] = B[j];
+                                                	j = j - 1;
+                                        	}
+                                	}
+                                	B[j + 1] = key;
                         	}
-                        	if(min != i)
-                        	{
-                                	temp = B[i];
-                                	B[i] = B[min];
-                                	B[min] = temp;
-                        	}
-                	}	
+                	}
       		}	
 		else
 		{	
@@ -247,10 +254,10 @@ else if(my_id > 1)
                 	sendparams[3] = rm;
                 	sendparams[4] = n;
 	
-                //P_SS(A,ll,lm,rl,rm,n);
+                //P_BS(A,ll,lm,rl,rm,n);
                 	MPI_Send(&sendparams,5,MPI_INT,(2*my_id),0,MPI_COMM_WORLD);
 			MPI_Send(B,n,MPI_INT,(2*my_id),0,MPI_COMM_WORLD);
-                //P_SS(A,lm+1,lh,rm+1,rh,n);
+                //P_BS(A,lm+1,lh,rm+1,rh,n);
                 	sendparams[0] = lm+1;
 			sendparams[1] = lh;
 			sendparams[2] = rm+1;
@@ -280,14 +287,14 @@ else if(my_id > 1)
                         	B[i] = C[i];
                 	}
                 	free (C);	
-			sendparams[0] = ll; 
-			sendparams[1] = lm;
-			sendparams[2] = rm+1;
-			sendparams[3] = rh;
-			sendparams[4] = n;
-			MPI_Send(&sendparams,5,MPI_INT,(2*my_id),0,MPI_COMM_WORLD);
-			MPI_Send(B,n,MPI_INT,(2*my_id),0,MPI_COMM_WORLD);
-			//P_SS(A,lm+1,lh,rl,rm,n);
+			//sendparams[0] = ll; 
+			//sendparams[1] = lm;
+			//sendparams[2] = rm+1;
+			//sendparams[3] = rh;
+			//sendparams[4] = n;
+			//MPI_Send(&sendparams,5,MPI_INT,(2*my_id),0,MPI_COMM_WORLD);
+			//MPI_Send(B,n,MPI_INT,(2*my_id),0,MPI_COMM_WORLD);
+			//P_BS(A,lm+1,lh,rl,rm,n);
 			sendparams[0] = lm+1; 
 			sendparams[1] = lh;
 			sendparams[2] = rl;
@@ -296,18 +303,18 @@ else if(my_id > 1)
 			MPI_Send(&sendparams,5,MPI_INT,(2* my_id + 1),0,MPI_COMM_WORLD);
 			MPI_Send(B,n,MPI_INT,(2 * my_id +1),0,MPI_COMM_WORLD);
 			// Recieve
-                	//P_SS(A,ll,lm,rm+1,rh,n);
-               	 	C = malloc(sizeof(int) * n);
-			MPI_Recv(C,n,MPI_INT,(2 * my_id),0,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
-			for(i = ll; i<=lm; i++)
-			{
-				B[i]  = C[i];
-			}
-			for(i = rm+1; i<= rh; i++ )
-			{
-				B[i] = C[i];
-			}
-			free(C);
+                	//P_BS(A,ll,lm,rm+1,rh,n);
+               	 	//C = malloc(sizeof(int) * n);
+			//MPI_Recv(C,n,MPI_INT,(2 * my_id),0,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+			//for(i = ll; i<=lm; i++)
+			//{
+			//	B[i]  = C[i];
+			//}
+			//for(i = rm+1; i<= rh; i++ )
+			//{
+			//	B[i] = C[i];
+			//}
+			//free(C);
                 	C = malloc(sizeof(int) * n);
 			MPI_Recv(C,n,MPI_INT,(2 * my_id + 1),0,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
 			for(i = lm+1; i<=lh; i++)
@@ -331,52 +338,46 @@ else if(my_id > 1)
 	}
 }
 }
-void R_SS(int *A,int l ,int h,int n)
+void R_BS(int *A,int l ,int h,int n)
 {
-        int temp, m, i,j, recvcount, sendcount,min;
+        int temp, m, i,j, recvcount, sendcount, key;
 	int *B;
 	if(my_id == 0) 
 	{
 		if((h-l + 1) <= COUNT/2)
         	{
-			for(i = l; i <=h - 1; i++)
-                        {
-                                min = i;
-                                for(j = i+1; j <= h; j++)
-                                {
-                                        if(A[j] < A[min])
-                                        {
-                                                min = j;
-                                        }
-                                }
-                                if(min != i)
-                                {
-                                        temp = A[i];
-                                        A[i] = A[min];
-                                        A[min] = temp;
-                                }
-                        }
+                	for(i = l; i <=h; i++)
+                	{
+                        	for(j = l; j <= l + h - i - 1; j++)
+                        	{
+                                	if(A[j] > A[j+1])
+                                	{
+                                        	temp = A[j];
+                                       		 A[j] = A[j+1];
+                                        	A[j+1] = temp;
+                                	}
+                        	}
+                	}	
         	}
         	else
         	{
                 	m = (l+h) / 2;
-			P_SS(A,l,m,m+1,h,n);
 			sendcount = m+1;
                         B = malloc(sizeof(int) * (m+1));
 			MPI_Send(&sendcount,1,MPI_INT,1,0,MPI_COMM_WORLD);
    			MPI_Send(A, m+1, MPI_INT, 1, 0, MPI_COMM_WORLD);
-                	R_SS(A, m+1, h, n);
+                	R_BS(A, m+1, h, n);
 			MPI_Recv(B, m+1, MPI_INT, 1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 			for(i = 0; i <= m; i++)	
 			{
 				A[i] = B[i];
 			}
 			free(B);
+			P_BS(A,l,m,m+1,h,n);
         	}
 	}
 	else if(my_id == 1)
 	{
-		
 		MPI_Recv(&recvcount,1,MPI_INT,0,0,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
 		B = malloc(sizeof(int) * recvcount);
 		MPI_Recv(B,recvcount, MPI_INT, 0, 0, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
@@ -384,30 +385,23 @@ void R_SS(int *A,int l ,int h,int n)
 		h = recvcount -1; 
 		if((h-l + 1) <= COUNT/2)
                 {
-			for(i = l; i <=h - 1; i++)
+			for (i = l + 1; i <= h; i++)
                         {
-                                min = i;
-                                for(j = i+1; j <= h; j++)
+                                key = B[i];
+                                j = i - 1;
+                                while (j >= l && B[j] > key)
                                 {
-                                        if(B[j] < B[min])
-                                        {
-                                                min = j;
-                                        }
-                                }
-                                if(min != i)
-                                {
-                                        temp = B[i];
-                                        B[i] = B[min];
-                                        B[min] = temp;
+                                        B[j + 1] = B[j];
+                                        j = j - 1;
+                                        B[j + 1] = key;
                                 }
                         }
-
                 }
 		MPI_Send(B, recvcount, MPI_INT, 0, 0, MPI_COMM_WORLD);
 		free (B);
 	}
 	else if(my_id > 1)
 	{
-	                P_SS(A,l,m,m+1,h,n);
+	                P_BS(A,l,m,m+1,h,n);
 	}
 }	
