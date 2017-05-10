@@ -5,7 +5,7 @@
 #SBATCH -p development  # Queue (partition) name -- normal, development, etc.
 #SBATCH -t 02:00:00     # Run time (hh:mm:ss) - 1.5 hours
 
-for i in {1..16}
+for i in {4..16}
 do
 	export CILK_NWORKERS=$i
 	./Ran com-lj-in.txt >> outran.txt
