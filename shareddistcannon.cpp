@@ -21,10 +21,12 @@ int main(int argc , char * argv []) {
         MPI_Comm_size ( MPI_COMM_WORLD, &p);
 	MPI_Comm_rank ( MPI_COMM_WORLD, &my_id );
 	MPI_Request sendreq[2], recvreq[2];
-	id = my_id;
 	rootp = sqrt(p);
+	id = my_id;
 	COUNT = n / rootp;
-	int* C = new int[COUNT * COUNT];
+	int *scatterA, *scatterB;
+	int *gatherC;
+	int* C = new int[COUNT * COUNT + 1];
   	int* A = new int[COUNT * COUNT];
   	int* B = new int[COUNT * COUNT];
 	int* Brecv = new int[COUNT * COUNT];
@@ -38,32 +40,41 @@ int main(int argc , char * argv []) {
 			C[i *COUNT + j ] = 0;
 		}
 	}
-	for(int i = 0; i< COUNT; i++)
+	if(my_id == 0)
 	{
-		for(int j = 0; j < COUNT; j++)
+		scatterA = new int[n*n];
+		scatterB = new int[n*n];
+		gatherC = new int[n*n + p];
+		for(int i = n; i< n*n; i++)
 		{
 			sign = rand_r(&id) % 2;
 			random = rand_r(&id) % 100;
 			if (sign == 1)
 			{
-				A[COUNT * i + j] = random;
+				scatterA[i] = random;
 			}
 			else
 			{
-				A[COUNT * i + j]  = -1 * (random);
+				scatterA[i]  = -1 * (random);
 			}
 			sign = rand_r(&id) % 2;
 			random = rand_r(&id) % 100;
                         if (sign == 1)
                         {
-                                B[COUNT * i + j]  = random;
+                                scatterB[i]  = random;
                         } 
-                        else
+                       	 else
                         {
-                                B[COUNT * i + j]  = -1 * (random);
-                        }
+                               	scatterB[i]  = -1 * (random);
+                       	}
 		}
+
+	            gettimeofday(&start,NULL);
+
 	}
+	
+	MPI_Scatter(scatterA,COUNT * COUNT,MPI_INT,A,COUNT * COUNT,MPI_INT,0,MPI_COMM_WORLD);
+	MPI_Scatter(scatterB,COUNT * COUNT,MPI_INT,B,COUNT * COUNT,MPI_INT,0,MPI_COMM_WORLD);
 	get2dprocessrank(my_id, x, y);
 	// rotate x of A[x,y] by x positions to the left
 	// rotate y of B[x,y] by y positions to the top
@@ -97,8 +108,6 @@ int main(int argc , char * argv []) {
 
 	//printf("\nProcessor with rank %d P[%d,%d] will recieve A to P[%d,%d] with rank %d",my_id,x,y,x,Ax,recvA);
         //printf("\nProcessor with rank %d P[%d,%d] will recieve B to P[%d,%d] with rank %d",my_id,x,y,By,y,recvB);
-    	if(my_id == 0)
-	gettimeofday(&start,NULL);
 	
 	// recv A
 	MPI_Isend(A, COUNT * COUNT, MPI_INT, sendA, 0, MPI_COMM_WORLD,&sendreq[0]);
@@ -116,7 +125,7 @@ int main(int argc , char * argv []) {
         MPI_Wait(&sendreq[1],&stat);
 
 
-/*	if(my_id == 0)
+	/*if(my_id == 0)
 	{
 		for(i = 0; i< COUNT; i++)
 		{
@@ -140,12 +149,13 @@ int main(int argc , char * argv []) {
                 }
 
 		
-        } */ 
+        }*/
+	#pragma omp parallel for  
        for(int i = 0; i< COUNT; i++)
         {
-                for(int j =0; j< COUNT; j++)
+                for(int k =0; k< COUNT; k++)
                 {
-                        for(int k = 0; k < COUNT; k++)
+                        for(int j = 0; j < COUNT; j++)
                         {
                                 C[i* COUNT + j]  += Arecv[COUNT *i + k ] * Brecv[COUNT * k + j ];
                         }
@@ -198,12 +208,12 @@ int main(int argc , char * argv []) {
 
         	MPI_Wait(&sendreq[0],&stat);
        		MPI_Wait(&sendreq[1],&stat);
-
+		#pragma omp parallel for
 		for(int i = 0; i< COUNT; i++)
         	{
-                	for(int j =0; j< COUNT; j++)
+                	for(int k =0; k< COUNT; k++)
                 	{
-                        	for(int k = 0; k < COUNT; k++)
+                        	for(int j = 0; j < COUNT; j++)
                         	{
                                 	C[i* COUNT + j]  += Arecv[COUNT *i + k ] * Brecv[COUNT * k + j ];
                         	}
@@ -211,8 +221,10 @@ int main(int argc , char * argv []) {
         	}
 	}	
 	
+	C[COUNT* COUNT] = my_id;
 
-	
+		
+	MPI_Gather(C,COUNT * COUNT + 1,MPI_INT,gatherC,COUNT * COUNT + 1,MPI_INT,0,MPI_COMM_WORLD);
 
 	delete [] C;
 	delete [] A;
@@ -221,12 +233,14 @@ int main(int argc , char * argv []) {
 	delete [] Brecv;
 	delete [] tempA;
 	MPI_Finalize();
+
 	if(my_id == 0)
-	{
-		gettimeofday(&end,NULL);
-		double myTime = (end.tv_sec+(double)end.tv_usec/1000000) - (start.tv_sec+(double)start.tv_usec/1000000);
-        	printf("\n%f",myTime);
-	}
+        {
+                gettimeofday(&end,NULL);
+                double myTime = (end.tv_sec+(double)end.tv_usec/1000000) - (start.tv_sec+(double)start.tv_usec/1000000);
+                printf("\n%f",myTime);
+        }
+
 }
 
 void get2dprocessrank(int my_id, int &x, int &y)

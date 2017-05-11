@@ -141,11 +141,12 @@ int main(int argc , char * argv []) {
 
 		
         } */ 
-       for(int i = 0; i< COUNT; i++)
+        #pragma omp parallel for
+	for(int i = 0; i< COUNT; i++)
         {
-                for(int j =0; j< COUNT; j++)
+                for(int k =0; k< COUNT; k++)
                 {
-                        for(int k = 0; k < COUNT; k++)
+                        for(int j = 0; j < COUNT; j++)
                         {
                                 C[i* COUNT + j]  += Arecv[COUNT *i + k ] * Brecv[COUNT * k + j ];
                         }
@@ -198,12 +199,12 @@ int main(int argc , char * argv []) {
 
         	MPI_Wait(&sendreq[0],&stat);
        		MPI_Wait(&sendreq[1],&stat);
-
+		#pragma omp parallel for
 		for(int i = 0; i< COUNT; i++)
         	{
-                	for(int j =0; j< COUNT; j++)
+                	for(int k =0; k< COUNT; k++)
                 	{
-                        	for(int k = 0; k < COUNT; k++)
+                        	for(int j = 0; j < COUNT; j++)
                         	{
                                 	C[i* COUNT + j]  += Arecv[COUNT *i + k ] * Brecv[COUNT * k + j ];
                         	}
