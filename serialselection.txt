@@ -1,0 +1,48 @@
+
+0.330448
+ Performance counter stats for './a.out 15 12':
+
+             6,897 cache-misses                                                
+
+       0.334532100 seconds time elapsed
+
+
+1.312411
+ Performance counter stats for './a.out 16 13':
+
+            10,258 cache-misses                                                
+
+       1.314308929 seconds time elapsed
+
+
+5.252377
+ Performance counter stats for './a.out 17 14':
+
+            23,272 cache-misses                                                
+
+       5.254196681 seconds time elapsed
+
+
+21.124244
+ Performance counter stats for './a.out 18 15':
+
+            78,912 cache-misses                                                
+
+      21.126443799 seconds time elapsed
+
+
+84.938705
+ Performance counter stats for './a.out 19 16':
+
+           191,001 cache-misses                                                
+
+      84.941786905 seconds time elapsed
+
+
+340.307362
+ Performance counter stats for './a.out 20 17':
+
+           855,199 cache-misses                                                
+
+     340.311700235 seconds time elapsed
+
